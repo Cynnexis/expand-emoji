@@ -1,5 +1,14 @@
+# Main workflow for expand-emoji
+#
+# This workflow builds the program for Linux, macOS and Windows, build the
+# Docker image, and create a release in the GitHub repo with the binaries
+# mentioned before.
+#
 name: expand-emoji CI/CD
 
+# This workflow is only triggers on pull requests on main or pushes on main.
+# It can also be triggered by branches that edit this workflow (they start with
+# "cicd/")
 on:
   pull_request:
     branches:
@@ -10,34 +19,58 @@ on:
       - main
       - 'cicd/**'
 
+env:
+  # Define the go version to use
+  GO_VERSION: '1.16'
+
 jobs:
-  # TODO: Build on different platform (see https://ncorti.com/blog/howto-github-actions-build-matrix)
+  # Build the binary for all platforms
   build-binary:
-    runs-on: ubuntu-20.04
-    name: Build the binary
+    strategy:
+      # Define the matrix containing all operating systems.
+      # The asset_bin_suffix is an addition variable that indicates how to name
+      # the asset according to the OS, as well as $path_bin_suffix that defines
+      # the name of the built binary.
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            asset_bin_suffix: -linux-amd64
+            path_bin_suffix: ""
+          - os: macos-11
+            asset_bin_suffix: -macos-amd64
+            path_bin_suffix: ""
+          - os: windows-2022
+            asset_bin_suffix: .exe
+            path_bin_suffix: .exe
+    
+    # Run this job for all defined OS
+    runs-on: ${{ matrix.os }}
+    name: Build the binary for ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.16'
+          go-version: ${{ env.GO_VERSION }}
       - name: Go version
         run: go version
       - name: Build
-        run: |
-          go mod tidy
-          go build
+        run: go mod tidy && go build
+      - name: Rename binary
+        run: mv expand-emoji${{ matrix.path_bin_suffix }} expand-emoji${{ matrix.asset_bin_suffix }}
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: expand-emoji
-          path: expand-emoji
+          name: expand-emoji${{ matrix.asset_bin_suffix }}
+          path: expand-emoji${{ matrix.asset_bin_suffix }}
           if-no-files-found: error
 
+  # Build the Docker image and push it to Docker Hub
   build-docker:
     runs-on: ubuntu-20.04
     name: Build the Docker image and send it to Docker Hub
+    # Only build it for release
     if: github.event_name == 'push' && contains(github.ref, 'main') || contains(github.ref, 'cicd/')
     steps:
       - name: Checkout
@@ -47,46 +80,40 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
+          # Credentials passed as secrets to login to Docker Hub
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # Build and push the image
       - name: Build and push Docker image to Docker Hub
         uses: docker/build-push-action@v2
         with:
-          repository: cynnexis/expand-emoji
+          # Pass the project version to have a label
           build-args: "PROJECT_VERSION=${{ env.app_version }}"
+          # Two tags will be given to the built image: the version, and "latest".
           tags: cynnexis/expand-emoji:latest,cynnexis/expand-emoji:${{ env.app_version }}
           push: true
 
+  # Create a release in the GitHub repo
   release:
     runs-on: ubuntu-20.04
     name: Create a release
+    # This job should be the last one
     needs: [build-binary, build-docker]
     if: github.event_name == 'push' && contains(github.ref, 'main') || contains(github.ref, 'cicd/')
     steps:
       - name: Prepare workspace
         run: mkdir -p /tmp/android-binaries
+      # Download built binaries
       - name: Download action artifacts
-        id: download_artifacts
-        uses: actions/download-artifact@v2.0.10
+        uses: actions/download-artifact@v3
         with:
           path: /tmp/binaries
-      - name: Treat downloaded artifacts
-        run: |
-          # Save current directory
-          OLD_WD=$(pwd)
-
-          # Move all artifacts to current dirtectory
-          cd /tmp/binaries
-          find . -type f -exec mv -v {} . \;
-
-          # Remove all sub-directories
-          find . -empty -type d -delete
-          cd "$OLD_WD"
-      - name: Checkout
-        uses: actions/checkout@v2
       - name: Get app version
-        id: get_current_app_version
-        run: echo "app_version=$(make version)" >> $GITHUB_ENV
+        run: |
+          find /tmp/binaries -type f -exec chmod a+x "{}" \;
+          app_version=$(/tmp/binaries/expand-emoji-linux-amd64/expand-emoji-linux-amd64 --version | head -n1 | awk '{print $NF;}')
+          echo "app_version=$app_version" >> $GITHUB_ENV
+      # Create the release
       - name: Create a release for expand-emoji
         id: create_release
         uses: actions/create-release@v1.1.4
@@ -98,12 +125,31 @@ jobs:
           body: "Ref: ${{ github.ref }} SHA: ${{ github.sha }}"
           draft: true
           prerelease: false
-      - name: Upload expand-emoji binary
+      # Upload all artifacts
+      - name: Upload expand-emoji Linux binary
         uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /tmp/binaries/expand-emoji/expand-emoji
-          asset_name: expand-emoji
+          asset_path: /tmp/binaries/expand-emoji-linux-amd64/expand-emoji-linux-amd64
+          asset_name: expand-emoji-linux-amd64
+          asset_content_type: application/octet-stream
+      - name: Upload expand-emoji MacOS binary
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /tmp/binaries/expand-emoji-macos-amd64/expand-emoji-macos-amd64
+          asset_name: expand-emoji-macos-amd64
+          asset_content_type: application/octet-stream
+      - name: Upload expand-emoji Windows binary
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /tmp/binaries/expand-emoji.exe/expand-emoji.exe
+          asset_name: expand-emoji.exe
           asset_content_type: application/octet-stream
