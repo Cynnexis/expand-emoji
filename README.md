@@ -42,9 +42,9 @@ Finally, use the image with the following command:
 ```bash
 docker run -d \
 	--name=expand-emoji \
-	-v "/path/to/my/folder/file.txt:/go/file.txt" \
+	-v "/path/to/my/folder/file.txt:/file.txt" \
 	cynnexis/expand-emoji \
-	/go/file.txt
+	/file.txt
 ```
 
 ## :building_construction: Build With
