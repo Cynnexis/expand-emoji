@@ -7,18 +7,26 @@ import (
 	"github.com/kyokomi/emoji/v2"
 )
 
+// The application version.
 const APP_VERSION string = "1.0.0"
 
+// Default logger for the program
 var defaultLog = log.New(os.Stdout, "", 0)
 
+// Print the help message about the application to the console.
+//
+// The argument `stdout` indicates if the message should be write to the
+// standard output (`true`) or the standard err (`false`).
 func print_help(stdout bool) {
 	var l = log.New(os.Stdout, "", 0)
 	if !stdout {
 		l = log.New(os.Stderr, "", 0)
 	}
+
 	l.Printf("%s\nReplace all emoji shortcodes in the given files to their respective emoji characters, in-place.\n\nusage: %s [-h/--help] [--verbose] FILE...\n\nArguments:\n\t-h/--help  - Print this message and quits.\n\t--version  - Print the version and quits.\n", os.Args[0], os.Args[0])
 }
 
+// Main function.
 func main() {
 	// Parse arguments
 	if len(os.Args[1:]) == 1 {
