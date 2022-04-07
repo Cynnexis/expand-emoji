@@ -105,29 +105,11 @@ jobs:
         run: mkdir -p /tmp/android-binaries
       # Download built binaries
       - name: Download action artifacts
-        uses: actions/download-artifact@v2.0.10
+        uses: actions/download-artifact@v3
         with:
           path: /tmp/binaries
-      # Save the binaries
-      - name: Treat downloaded artifacts
-        run: |
-          # Save current directory
-          OLD_WD=$(pwd)
-
-          # Move all artifacts to current directory
-          cd /tmp/binaries
-          #find . -type f -exec mv -v {} . \;
-
-          # Remove all sub-directories
-          find . -empty -type d -delete
-          cd "$OLD_WD"
-
-          # TODO: DEBUG
-          sudo apt-get update
-          sudo apt-get install -qqy tree
-          tree /tmp/binaries
       - name: Get app version
-        run: echo "app_version=$(/tmp/binaries/expand-emoji/expand-emoji-linux-amd64 --version)" >> $GITHUB_ENV
+        run: echo "app_version=$(/tmp/binaries/expand-emoji-linux-amd64/expand-emoji-linux-amd64 --version)" >> $GITHUB_ENV
       # Create the release
       - name: Create a release for expand-emoji
         id: create_release
