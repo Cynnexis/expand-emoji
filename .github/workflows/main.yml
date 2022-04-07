@@ -57,7 +57,7 @@ jobs:
   release:
     runs-on: ubuntu-20.04
     name: Create a release
-    needs: [lint, build-android, build-web]
+    needs: [build-binary, build-docker]
     if: github.event_name == 'push' && contains(github.ref, 'main') || contains(github.ref, 'cicd/')
     steps:
       - name: Prepare workspace
