@@ -4,6 +4,8 @@
 
 expand-emoji is a program that replaces all emoji shortcodes in the given files to their respective emoji characters.
 
+[![GitHub](https://img.shields.io/badge/GitHub-expand--emoji-white)](https://github.com/Cynnexis/expand-emoji) [![DockerHub](https://img.shields.io/badge/Docker%20Hub-expand--emoji-%232496ED)](https://hub.docker.com/r/cynnexis/expand-emoji)
+
 ## :dart: Goals
 
 This program is only an interface for the [kyokomi's emoji](https://github.com/kyokomi/emoji) library.
@@ -42,10 +44,13 @@ Finally, use the image with the following command:
 ```bash
 docker run -d \
 	--name=expand-emoji \
-	-v "/path/to/my/folder/file.txt:/file.txt" \
+	-v "/path/to/expand-emoji/README.md:/README.md" \
 	cynnexis/expand-emoji \
-	/file.txt
+	/README.md
 ```
+
+> Note that this `README.md` contains shortcodes.
+> You can use `expand-emoji` to replace them with actual emoji.
 
 ## :building_construction: Build With
 

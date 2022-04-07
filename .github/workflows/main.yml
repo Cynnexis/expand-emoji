@@ -104,6 +104,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /tmp/binaries/expand-emoji
+          asset_path: /tmp/binaries/expand-emoji/expand-emoji
           asset_name: expand-emoji
           asset_content_type: application/octet-stream
