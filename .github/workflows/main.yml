@@ -109,7 +109,10 @@ jobs:
         with:
           path: /tmp/binaries
       - name: Get app version
-        run: echo "app_version=$(/tmp/binaries/expand-emoji-linux-amd64/expand-emoji-linux-amd64 --version)" >> $GITHUB_ENV
+        run: |
+          find /tmp/binaries -type f -exec chmod a+x "{}" \;
+          app_version=$(/tmp/binaries/expand-emoji-linux-amd64/expand-emoji-linux-amd64 --version)
+          echo "app_version=$app_version" >> $GITHUB_ENV
       # Create the release
       - name: Create a release for expand-emoji
         id: create_release
