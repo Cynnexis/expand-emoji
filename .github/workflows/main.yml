@@ -1,0 +1,106 @@
+name: expand-emoji CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'cicd/**'
+  push:
+    branches:
+      - main
+      - 'cicd/**'
+
+jobs:
+  # TODO: Build on different platform (see https://ncorti.com/blog/howto-github-actions-build-matrix)
+  build-binary:
+    runs-on: ubuntu-20.04
+    name: Build the binary
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v3
+      - name: Go version
+        run: go version
+      - name: Build
+        run: |
+          go mod tidy
+          go build
+      - name: Upload binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: expand-emoji
+          path: expand-emoji
+          if-no-files-found: error
+
+  build-docker:
+    runs-on: ubuntu-20.04
+    name: Build the Docker image and send it to Docker Hub
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Get app version
+        run: echo "app_version$(make version)" >> $GITHUB_ENV
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push Docker image to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          repository: cynnexis/expand-emoji
+          build-args: "PROJECT_VERSION=${{ env.app_version }}"
+          tags: cynnexis/expand-emoji:latest,cynnexis/expand-emoji:${{ env.app_version }}
+          push: true
+
+  release:
+    runs-on: ubuntu-20.04
+    name: Create a release
+    needs: [lint, build-android, build-web]
+    if: github.event_name == 'push' && contains(github.ref, 'main') || contains(github.ref, 'cicd/')
+    steps:
+      - name: Prepare workspace
+        run: mkdir -p /tmp/android-binaries
+      - name: Download action artifacts
+        id: download_artifacts
+        uses: actions/download-artifact@v2.0.10
+        with:
+          path: /tmp/binaries
+      - name: Treat downloaded artifacts
+        run: |
+          # Save current directory
+          OLD_WD=$(pwd)
+
+          # Move all artifacts to current dirtectory
+          cd /tmp/binaries
+          find . -type f -exec mv -v {} . \;
+
+          # Remove all sub-directories
+          find . -empty -type d -delete
+          cd "$OLD_WD"
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Get app version
+        id: get_current_app_version
+        run: echo "app_version$(make version)" >> $GITHUB_ENV
+      - name: Create a release for expand-emoji
+        id: create_release
+        uses: actions/create-release@v1.1.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.app_version }}
+          release_name: v${{ env.app_version }}
+          body: "Ref: ${{ github.ref }} SHA: ${{ github.sha }}"
+          draft: true
+          prerelease: false
+      - name: Upload expand-emoji binary
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /tmp/binaries/expand-emoji
+          asset_name: expand-emoji
+          asset_content_type: application/octet-stream
