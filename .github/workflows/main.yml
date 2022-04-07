@@ -93,6 +93,11 @@ jobs:
           # Remove all sub-directories
           find . -empty -type d -delete
           cd "$OLD_WD"
+
+          # TODO: DEBUG
+          sudo apt-get update
+          sudo apt-get install -qqy tree
+          tree /tmp/binaries
       - name: Get app version
         id: get_current_app_version
         run: echo "app_version=$(/tmp/binaries/expand-emoji/expand-emoji-linux-amd64 --version)" >> $GITHUB_ENV
