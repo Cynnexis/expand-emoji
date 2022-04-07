@@ -57,11 +57,13 @@ jobs:
         run: go version
       - name: Build
         run: go mod tidy && go build
+      - name: Rename binary
+        run: mv expand-emoji${{ matrix.path_bin_suffix }} expand-emoji${{ matrix.asset_bin_suffix }}
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
           name: expand-emoji${{ matrix.asset_bin_suffix }}
-          path: expand-emoji${{ matrix.path_bin_suffix }}
+          path: expand-emoji${{ matrix.asset_bin_suffix }}
           if-no-files-found: error
 
   # Build the Docker image and push it to Docker Hub
@@ -145,7 +147,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /tmp/binaries/expand-emoji/expand-emoji-linux-amd64/expand-emoji-linux-amd64
+          asset_path: /tmp/binaries/expand-emoji-linux-amd64/expand-emoji-linux-amd64
           asset_name: expand-emoji-linux-amd64
           asset_content_type: application/octet-stream
       - name: Upload expand-emoji MacOS binary
@@ -154,7 +156,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /tmp/binaries/expand-emoji/expand-emoji-macos-amd64/expand-emoji-macos-amd64
+          asset_path: /tmp/binaries/expand-emoji-macos-amd64/expand-emoji-macos-amd64
           asset_name: expand-emoji-macos-amd64
           asset_content_type: application/octet-stream
       - name: Upload expand-emoji Windows binary
@@ -163,6 +165,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /tmp/binaries/expand-emoji/expand-emoji.exe/expand-emoji.exe
+          asset_path: /tmp/binaries/expand-emoji.exe/expand-emoji.exe
           asset_name: expand-emoji.exe
           asset_content_type: application/octet-stream
