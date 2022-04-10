@@ -8,7 +8,7 @@ import (
 )
 
 // The application version.
-const APP_VERSION string = "1.0.0"
+const APP_VERSION string = "1.0.1"
 
 // Default logger for the program
 var defaultLog = log.New(os.Stdout, "", 0)
