@@ -96,12 +96,20 @@ jobs:
   test-gh-action:
     runs-on: ubuntu-20.04
     name: Test the GitHub Action Cynnexis/expand-emoji
-    needs: [build-binary]
+    # TODO: DEBUG
+    #needs: [build-binary]
     # Only build it for release
     if: github.event_name == 'push' && contains(github.ref, 'main') || contains(github.ref, 'cicd/')
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      # TODO: DEBUG
+      - name: Print directory
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qqy tree
+          sudo apt-get clean
+          tree -pughn .
       - name: Use Cynnexis/expand-emoji
         uses: ./
         with:
