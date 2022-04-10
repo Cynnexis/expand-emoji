@@ -106,7 +106,7 @@ jobs:
       # TODO: DEBUG
       - name: Print directory
         env:
-          GH_WORKSPACE: github.workspace
+          GH_WORKSPACE: ${{ github.workspace }}
         run: |
           sudo apt-get update
           sudo apt-get install -qqy tree

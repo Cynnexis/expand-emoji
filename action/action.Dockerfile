@@ -19,7 +19,7 @@ ARG JQ_VERSION=1.6
 ADD https://github.com/Cynnexis/expand-emoji/releases/download/${EXPAND_EMOJI_TAG}/expand-emoji-linux-amd64 /usr/bin/expand-emoji
 ADD https://github.com/stedolan/jq/releases/download/jq-${JQ_VERSION}/jq-linux64 /usr/bin/jq
 
-COPY action/action-entry-point.bash /usr/bin/action-entry-point.bash
+COPY action-entry-point.bash /usr/bin/action-entry-point.bash
 
 RUN \
 	# Make installed programs executable
