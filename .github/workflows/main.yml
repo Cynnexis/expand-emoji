@@ -93,12 +93,33 @@ jobs:
           tags: cynnexis/expand-emoji:latest,cynnexis/expand-emoji:${{ env.app_version }}
           push: true
 
+  test-gh-action:
+    runs-on: ubuntu-20.04
+    name: Test the GitHub Action Cynnexis/expand-emoji
+    needs: [build-binary]
+    # Only build it for release
+    if: github.event_name == 'push' && contains(github.ref, 'main') || contains(github.ref, 'cicd/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Use Cynnexis/expand-emoji
+        uses: ./
+        with:
+          files: '["README.md", "LICENSE"]'
+      - name: Check the results
+        # Check that there are emojis in the README.md file, and that LICENSE is not empty
+        run: |
+          grep -aqe '😂' README.md
+          grep -aqe '🎯' README.md
+          grep -aqe '🔌' README.md
+          test -s LICENSE
+
   # Create a release in the GitHub repo
   release:
     runs-on: ubuntu-20.04
     name: Create a release
     # This job should be the last one
-    needs: [build-binary, build-docker]
+    needs: [build-binary, build-docker, test-gh-action]
     if: github.event_name == 'push' && contains(github.ref, 'main') || contains(github.ref, 'cicd/')
     steps:
       - name: Prepare workspace

@@ -1,4 +1,5 @@
 *
+!action/action-entry-point.bash
 !*.go
 !go.mod
 !go.sum

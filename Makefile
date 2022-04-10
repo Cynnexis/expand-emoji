@@ -56,6 +56,11 @@ build-docker: ${SOURCE_FILES} Dockerfile
 	PROJECT_VERSION=$$($(MAKE) version)
 	docker build -t cynnexis/expand-emoji --build-arg PROJECT_VERSION .
 
+.PHONY: build-docker-action
+build-docker-action: action/action.Dockerfile action/action-entry-point.bash
+	@set -euo pipefail
+	docker build -t cynnexis/expand-emoji:action -f "$<" .
+
 .PHONY: version
 version:
 	@set -euo pipefail
