@@ -1,0 +1,19 @@
+name: 'Expand Emoji'
+author: 'Cynnexis'
+description: 'expand-emoji is a program that replaces all emoji shortcodes in the given files to their respective emoji characters.'
+
+inputs:
+  files:
+    description: 'Files to expand, their content will be changed in-place. This argument accept a string that describes a JSON array containing the file paths as string. Example: ["file1.txt", "index.html"]. Make sure to put the value between simple quotes.'
+    required: true
+    default: '["--help"]'
+
+runs:
+  using: 'docker'
+  image: 'action/action.Dockerfile'
+  args:
+    - ${{ inputs.files }}
+
+branding:
+  icon: 'edit-3'
+  color: 'yellow'
